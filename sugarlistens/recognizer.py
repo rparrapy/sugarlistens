@@ -16,22 +16,20 @@ pygst.require('0.10')
 import gst
 
 import os
+import locale
+import configuration
 
 
 class Recognizer(dbus.service.Object):
 
-    LANGUAGE_MODEL = '/usr/share/pocketsphinx/model/lm/en_US/hub4.5000.DMP'
-    ACOUSTIC_MODEL = '/usr/share/pocketsphinx/model/hmm/en_US/hub4wsj_sc_8k'
-    PHONETIC_DICTIONARY = '/usr/share/pocketsphinx/model/lm/en_US/hub4.5000.dic'
-
     def __init__(self, dbus_conn, object_path='/org/sugarlabs/listens/recognizer'):
         dbus.service.Object.__init__(self, dbus_conn, object_path)
-        self._language_model = Recognizer.LANGUAGE_MODEL
-        self._acoustic_model = Recognizer.ACOUSTIC_MODEL
-        self._phonetic_dictionary = Recognizer.PHONETIC_DICTIONARY
-        self._language_model_param = 'lm'
+        self._config = configuration.Configuration()
+        self._language_model = self._config.language_models['en'][0]
+        self._acoustic_model = self._config.acoustic_models['en']
+        self._phonetic_dictionary = self._config.phonetic_dictionaries['en']
+        self._language_model_param = self._config.language_models['en'][1]
         self._pipeline = None
-
 
     @dbus.service.signal('org.sugarlabs.listens.recognizer')
     def result_ready(self, text):
@@ -39,31 +37,101 @@ class Recognizer(dbus.service.Object):
 
     @dbus.service.method('org.sugarlabs.listens.recognizer')
     def start_pipeline(self, path):
-        lm = path + '/speech/en/language.DMP'
-        if os.path.isfile(lm):
-            self._language_model = lm
-            self._language_model_param = 'lm'
-
-        lm = path + '/speech/en/language.fsg'
-        if os.path.isfile(lm):
-            self._language_model = lm
-            self._language_model_param = 'fsg'
-
-
-        pd = path + '/speech/en/dictionary.dic'
-        if os.path.isfile(pd):
-            self._phonetic_dictionary = pd
-
-        am = path + '/speech/en/'
-        am_test_file = am + 'mdef'
-        if os.path.isfile(am_test_file):
-            self._acoustic_model = am
+        self._set_models(path)
 
         if self._pipeline:
             self._pipeline.get_bus().remove_signal_watch()
             self._pipeline.set_state(gst.STATE_NULL)
 
         self.init_gst()
+
+    def _set_models(self, path):
+        loc = locale.getdefaultlocale()[0]
+        lang = loc.split('_')[0]
+        default = 'en'
+
+        options = [loc, lang, default]
+        am_lang = self._set_located_acoustic(path, options)
+        lm_lang = self._set_located_language(path, options)
+        dict_lang = self._set_located_dictionary(path, options)
+
+        if not (am_lang == lm_lang and lm_lang == dict_lang):
+            msg = '\nAcoustic Model: %s' % am_lang + \
+                '\nLanguage Model: %s' % lm_lang + \
+                '\nDictionary: %s' % dict_lang
+            raise Exception(
+                'Different language for models and dictionary:' + msg)
+
+    def _set_located_acoustic(self, path, options):
+        result = None
+        for suffix in options:
+            # Local
+            prefix = path + '/speech/' + suffix + '/'
+            am_test_file = prefix + 'mdef'
+            if os.path.isfile(am_test_file):
+                self._acoustic_model = prefix
+                result = suffix.split('_')[0]
+                break
+
+            default_am = self._config.acoustic_models.get(suffix)
+            if default_am:
+                self._acoustic_model = default_am
+                result = suffix.split('_')[0]
+                break
+
+        return result
+
+    def _set_located_language(self, path, options):
+        result = None
+        print self._language_model
+        for suffix in options:
+            prefix = path + '/speech/' + suffix + '/'
+
+            # Local statistical language
+            lm = prefix + 'language.DMP'
+            if os.path.isfile(lm):
+                self._language_model = lm
+                self._language_model_param = 'lm'
+                result = suffix.split('_')[0]
+                break
+
+            # Local Grammar
+            lm = prefix + 'language.fsg'
+            if os.path.isfile(lm):
+                self._language_model = lm
+                self._language_model_param = 'fsg'
+                result = suffix.split('_')[0]
+                break
+
+            # Default model
+            default_lm = self._config.language_models.get(suffix)
+            if default_lm:
+                self._language_model = default_lm[0]
+                self._language_model_param = default_lm[1]
+                result = suffix.split('_')[0]
+                break
+
+        return result
+
+    def _set_located_dictionary(self, path, options):
+        result = None
+        for suffix in options:
+            prefix = path + '/speech/' + suffix + '/'
+            pd = prefix + 'dictionary.dic'
+            # Local dict
+            if os.path.isfile(pd):
+                self._phonetic_dictionary = pd
+                result = suffix.split('_')[0]
+                break
+
+            # Default dict
+            default_dictionary = self._config.phonetic_dictionaries.get(suffix)
+            if default_dictionary:
+                self._phonetic_dictionary = default_dictionary
+                result = suffix.split('_')[0]
+                break
+
+        return result
 
     def init_gst(self):
         """Initialize the speech components"""
@@ -75,9 +143,6 @@ class Recognizer(dbus.service.Object):
         asr.connect('partial_result', self.asr_partial_result)
         asr.connect('result', self.asr_result)
 
-        # English Continuous
-        print self._language_model
-        print self._phonetic_dictionary
         asr.set_property(self._language_model_param, self._language_model)
         asr.set_property('dict', self._phonetic_dictionary)
         asr.set_property('hmm', self._acoustic_model)
