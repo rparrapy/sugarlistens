@@ -186,7 +186,7 @@ class Recognizer(dbus.service.Object):
 
 def start():
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    session_bus = dbus.SessionBus()
+    session_bus = dbus.SystemBus()
     name = dbus.service.BusName(
         'org.sugarlabs.listens.recognizer', session_bus)
     daemon = Recognizer(name)

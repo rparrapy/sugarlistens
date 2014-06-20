@@ -7,7 +7,7 @@ class RecognitionHelper(listened.Listened):
     def __init__(self, path):
         listened.Listened.__init__(self)
         self._path = path
-        self._bus = dbus.SessionBus()
+        self._bus = dbus.SystemBus()
         self._bus.add_signal_receiver(self.__final_result,
                                       dbus_interface='org.sugarlabs.listens.recognizer',
                                       signal_name='result_ready')
