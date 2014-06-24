@@ -25,7 +25,7 @@ class Listened(object):
             raise ValueError(
                 'Pattern group names and listener attributes do not match.')
 
-    def discard_listeners(self, pattern):
+    def discard_listeners(self, pattern='\w+'):
         regex = re.compile(pattern)
         if regex in self.__listeners:
             self.__listeners.pop(regex, None)
