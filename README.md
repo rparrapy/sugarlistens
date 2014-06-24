@@ -11,22 +11,21 @@ For more information, please refer to the project [proposal](https://wiki.sugarl
 ##Setup and Run
 1. Clone this repository: 
 
-  ```
+  ```bash
   git clone https://github.com/rparrapy/sugarlistens.git
   ```
   
 2. Install the module with setuptools:
 
- ```
+ ```bash
  cd sugarlistens
  python setup.py develop
- 
  ```
  
 3. Sugar Listens uses D-Bus' system bus to communicate with Sugar Activities.
 For this to work, you must enable it by adding a few lines to the existing policy element of **/etc/dbus-1/system.conf**:
 
- ```
+ ```xml
  <policy context="default">
     ...
     <!-- This lines are needed for Sugar Listens to work -->
@@ -38,7 +37,7 @@ For this to work, you must enable it by adding a few lines to the existing polic
  
 4. Run Sugar Listens in a terminal window:
 
- ```
+ ```bash
  python sugarlistens/sugarlistens/recognizer.py
  ```
  
