@@ -8,5 +8,6 @@ setup(
     description=("Speech Recognition Project for the Sugar Learning Platform"),
     license="GPL",
     keywords="speech recognition sugar",
-    packages=['sugarlistens']
+    packages=['sugarlistens'],
+    package_data={'sugarlistens': ['*.conf']}
 )
