@@ -28,7 +28,6 @@ class RecognitionHelper(listened.Listened):
             'start_pipeline',
             'org.sugarlabs.listens.recognizer')
         start_pipeline(self._path)
-        pass
 
     def stop_listening(self, pattern=None):
         if pattern:
