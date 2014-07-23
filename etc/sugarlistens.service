@@ -1,0 +1,9 @@
+[Unit]
+Description=Speech recognition for the Sugar Learning Platform.
+
+[Service]
+PIDFile=/tmp/sugarlistens.pid
+ExecStart=/usr/lib/python2.7/site-packages/sugarlistens/recognizer.py
+
+[Install]
+WantedBy=multi-user.target
