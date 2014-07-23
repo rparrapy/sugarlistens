@@ -85,7 +85,6 @@ class Recognizer(dbus.service.Object):
 
     def _set_located_language(self, path, options):
         result = None
-        print self._language_model
         for suffix in options:
             prefix = path + '/speech/' + suffix + '/'
 
