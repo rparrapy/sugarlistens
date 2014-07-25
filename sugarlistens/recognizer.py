@@ -9,6 +9,8 @@
 import dbus
 import dbus.service
 import dbus.mainloop.glib
+import lockfile
+import lockfile.pidlockfile 
 
 import gobject
 import pygst
@@ -37,7 +39,7 @@ class Recognizer(dbus.service.Object):
 
     @dbus.service.method('org.sugarlabs.listens.recognizer')
     def start_pipeline(self, path):
-        self._set_models(path)
+	self._set_models(path)
 
         if self._pipeline:
             self._pipeline.get_bus().remove_signal_watch()
@@ -180,6 +182,7 @@ class Recognizer(dbus.service.Object):
 
     def final_result(self, hyp, uttid):
         """Insert the final result."""
+        print hyp
         self.result_ready(hyp)
 
 
@@ -196,6 +199,8 @@ def main():
     loop = gobject.MainLoop()
     loop.run()
 
-
 if __name__ == "__main__":
+    pidfile = lockfile.pidlockfile.PIDLockFile("/tmp/sugarlistens.pid")
+    pidfile.acquire()
     main()
+    pidfile.release()

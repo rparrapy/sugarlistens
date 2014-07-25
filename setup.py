@@ -9,5 +9,5 @@ setup(
     license="GPL",
     keywords="speech recognition sugar",
     packages=['sugarlistens'],
-    package_data={'sugarlistens': ['*.conf']}
+    package_data={'sugarlistens': ['../etc/*.conf', '../etc/*.service']}
 )
