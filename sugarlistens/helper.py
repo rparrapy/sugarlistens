@@ -28,13 +28,24 @@ class RecognitionHelper(listened.Listened):
             'start_pipeline',
             'org.sugarlabs.listens.recognizer')
         start_pipeline(self._path)
-        pass
 
     def stop_listening(self, pattern=None):
         if pattern:
             self.discard_listeners(pattern)
         else:
             self.discard_listeners()
+
+    def stop_pipeline(self):
+        stop_pipeline = self._recognizer_service.get_dbus_method(
+            'stop_pipeline',
+            'org.sugarlabs.listens.recognizer')
+        stop_pipeline()
+    
+    def resume_pipeline(self):
+        resume_pipeline = self._recognizer_service.get_dbus_method(
+            'resume_pipeline',
+            'org.sugarlabs.listens.recognizer')
+        resume_pipeline()
 
     def __final_result(self, text):
         """Insert the final result."""
