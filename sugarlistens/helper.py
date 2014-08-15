@@ -1,3 +1,4 @@
+import traceback
 import listened
 import dbus
 
@@ -12,9 +13,13 @@ class RecognitionHelper(listened.Listened):
                                       dbus_interface='org.sugarlabs.listens.recognizer',
                                       signal_name='result_ready')
 
-        self._recognizer_service = self._bus.get_object(
-            'org.sugarlabs.listens.recognizer',
-            '/org/sugarlabs/listens/recognizer')
+        try:
+            self._recognizer_service = self._bus.get_object(
+                'org.sugarlabs.listens.recognizer',
+                '/org/sugarlabs/listens/recognizer')
+        except dbus.DBusException:
+            traceback.print_exc()
+            raise RuntimeError('Speech Recognition service not available')
 
 
     def listen(self, listener):
