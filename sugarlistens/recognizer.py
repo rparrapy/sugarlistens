@@ -33,6 +33,7 @@ class Recognizer(dbus.service.Object):
         self._phonetic_dictionary = self._config.phonetic_dictionaries['en']
         self._language_model_param = self._config.language_models['en'][1]
         self._pipeline = None
+        self._muted = False
 
     @dbus.service.signal('org.sugarlabs.listens.recognizer')
     def result_ready(self, text):
@@ -40,13 +41,28 @@ class Recognizer(dbus.service.Object):
 
     @dbus.service.method('org.sugarlabs.listens.recognizer')
     def start_pipeline(self, path):
-	self._set_models(path)
+        self._current_path = path
+        self._set_models(path)
 
         if self._pipeline:
             self._pipeline.get_bus().remove_signal_watch()
             self._pipeline.set_state(gst.STATE_NULL)
 
-        self.init_gst()
+        if not self._muted:
+            self.init_gst()
+
+    @dbus.service.method('org.sugarlabs.listens.recognizer')
+    def stop_pipeline(self):
+        if self._pipeline:
+            self._pipeline.get_bus().remove_signal_watch()
+            self._pipeline.set_state(gst.STATE_NULL)
+            self._pipeline = None
+            self._muted = True
+
+    @dbus.service.method('org.sugarlabs.listens.recognizer')
+    def resume_pipeline(self):
+        self._muted = False
+        self.start_pipeline(self._current_path)
 
     def _set_models(self, path):
         loc = locale.getdefaultlocale()[0]
@@ -183,7 +199,6 @@ class Recognizer(dbus.service.Object):
 
     def final_result(self, hyp, uttid):
         """Insert the final result."""
-        print hyp
         self.result_ready(hyp)
 
 
@@ -199,6 +214,7 @@ def main():
     start()
     loop = gobject.MainLoop()
     loop.run()
+
 
 if __name__ == "__main__":
     pidfile = lockfile.pidlockfile.PIDLockFile("/tmp/sugarlistens.pid")
