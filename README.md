@@ -12,7 +12,7 @@ For more information, please refer to the project [proposal](https://wiki.sugarl
 1. Install the dependencies. If you are using Fedora 20 like I am it is as simple as running:
 
  ```bash
- sudo yum install pocketsphinx pocketsphinx-libs pocketsphinx-plugin pocketsphinx-devel pocketsphinx-python pocketsphinx-models git python-setuptools
+ sudo yum install pocketsphinx pocketsphinx-libs pocketsphinx-plugin pocketsphinx-devel pocketsphinx-python pocketsphinx-models git python-setuptools python-lockfile
  ```
 
 2. Clone this repository: 
